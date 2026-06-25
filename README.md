@@ -94,11 +94,12 @@ Then open http://localhost:3000.
 
 ## Running the tests
 
-**Backend** — needs a Postgres `tickets_test` database. The Docker `db` service
-creates it for you:
+The backend tests need a reachable Postgres server. They create the
+`tickets_test` database themselves if it isn't already there, so there's nothing
+to set up beyond the server:
 
 ```bash
-docker compose up -d db        # or use any local Postgres + `createdb tickets_test`
+docker compose up -d db   # or any local Postgres on localhost:5432
 cd server
 uv run pytest
 ```
@@ -110,7 +111,9 @@ cd client
 npm test
 ```
 
-Both suites run in CI (GitHub Actions) on every push.
+Between them the suites cover backend validation, ticket creation, status
+updates, form validation, and list rendering. Both run in CI (GitHub Actions) on
+every push.
 
 ## API
 
@@ -161,7 +164,6 @@ server/   FastAPI backend
   app/        main, routes, auth, security, models, schemas, database, seed, config
   migrations/ Alembic migrations
   tests/      pytest suite
-db/       Postgres init (creates the test database)
 ```
 
 ## Assumptions and trade-offs

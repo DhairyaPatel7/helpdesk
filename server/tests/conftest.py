@@ -2,7 +2,7 @@ import os
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlmodel import Session, SQLModel
 
 from app.auth import get_current_user
@@ -16,8 +16,24 @@ TEST_DATABASE_URL = os.getenv(
 )
 
 
+def _ensure_database(url: str) -> None:
+    name = url.rsplit("/", 1)[1].split("?")[0]
+    admin_url = f"{url.rsplit('/', 1)[0]}/postgres"
+    admin_engine = create_engine(admin_url, isolation_level="AUTOCOMMIT")
+    try:
+        with admin_engine.connect() as conn:
+            exists = conn.execute(
+                text("SELECT 1 FROM pg_database WHERE datname = :name"), {"name": name}
+            ).first()
+            if exists is None:
+                conn.execute(text(f'CREATE DATABASE "{name}"'))
+    finally:
+        admin_engine.dispose()
+
+
 @pytest.fixture(scope="session")
 def engine():
+    _ensure_database(TEST_DATABASE_URL)
     engine = create_engine(TEST_DATABASE_URL)
     SQLModel.metadata.create_all(engine)
     yield engine

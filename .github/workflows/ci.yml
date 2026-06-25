@@ -37,8 +37,6 @@ jobs:
       - run: uv sync
       - name: Lint
         run: uv run ruff check .
-      - name: Create test database
-        run: PGPASSWORD=tickets psql -h localhost -U tickets -d tickets -c "CREATE DATABASE tickets_test;"
       - name: Verify migrations apply
         run: uv run alembic upgrade head
       - name: Run tests
