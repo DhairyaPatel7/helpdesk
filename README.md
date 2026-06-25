@@ -1,5 +1,7 @@
 # Support Ticket Dashboard
 
+[![CI](https://github.com/DhairyaPatel7/aurexillion-technical-assessment/actions/workflows/ci.yml/badge.svg)](https://github.com/DhairyaPatel7/aurexillion-technical-assessment/actions/workflows/ci.yml)
+
 A compact full-stack app for viewing, creating, and updating customer support
 tickets. Next.js + TypeScript on the front, FastAPI + PostgreSQL on the back.
 

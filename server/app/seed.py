@@ -160,9 +160,10 @@ def _sample_tickets() -> list[Ticket]:
 
 
 def _seed_tickets(session: Session) -> None:
-    if session.exec(select(Ticket)).first() is not None:
+    existing_titles = set(session.exec(select(Ticket.title)).all())
+    tickets = [ticket for ticket in _sample_tickets() if ticket.title not in existing_titles]
+    if not tickets:
         return
-    tickets = _sample_tickets()
     session.add_all(tickets)
     session.commit()
     print(f"Seeded {len(tickets)} tickets.")
