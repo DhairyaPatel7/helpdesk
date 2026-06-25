@@ -13,7 +13,7 @@ on its own for development.
 - **App:** https://aurexillion-technical-assessment.vercel.app
 - **API docs (Swagger):** https://aurexillion-api.onrender.com/docs
 
-Sign in with the seeded demo account — **`demo@aurexillion.com` / `demo12345`** —
+Sign in with the seeded demo account (**`demo@aurexillion.com` / `demo12345`**)
 or register a new one.
 
 > Hosted on Vercel (frontend), Render (backend), and Neon (Postgres). The full
@@ -91,7 +91,7 @@ Then open http://localhost:3000.
 - The schema is managed with **Alembic migrations** (`alembic upgrade head`); the
   app doesn't create tables on the fly.
 - Sample data (tickets + the demo user) is inserted by `python -m app.seed`,
-  which is idempotent — it only adds what's missing.
+  which is idempotent and only adds the rows that are missing.
 - With Docker, migrations and seeding run automatically on startup.
 
 ## Running the tests
@@ -123,14 +123,14 @@ REST, JSON in and out. The resource API is versioned under `/api/v1`.
 
 | Method  | Path                    | Auth | Description |
 | ------- | ----------------------- | :--: | ----------- |
-| `POST`  | `/api/v1/auth/register` |  —   | Create an account, returns a token |
-| `POST`  | `/api/v1/auth/login`    |  —   | Sign in, returns a token |
+| `POST`  | `/api/v1/auth/register` |      | Create an account, returns a token |
+| `POST`  | `/api/v1/auth/login`    |      | Sign in, returns a token |
 | `GET`   | `/api/v1/auth/me`       |  🔒  | The current user |
-| `GET`   | `/api/v1/tickets`       |  🔒  | List tickets (`?status=`, `?priority=`, `?search=`, `?sort=`) |
+| `GET`   | `/api/v1/tickets`       |  🔒  | List tickets (`?status=`, `?priority=`, `?search=`, `?sort=`, `?limit=`, `?offset=`) |
 | `GET`   | `/api/v1/tickets/{id}`  |  🔒  | Get one ticket |
 | `POST`  | `/api/v1/tickets`       |  🔒  | Create a ticket (always starts `open`) |
 | `PATCH` | `/api/v1/tickets/{id}`  |  🔒  | Update a ticket (primarily its status) |
-| `GET`   | `/api/health`           |  —   | Liveness check |
+| `GET`   | `/api/health`           |      | Liveness check |
 
 Endpoints marked 🔒 require an `Authorization: Bearer <token>` header; obtain the
 token from `login` or `register`.
@@ -151,9 +151,22 @@ A ticket looks like:
 }
 ```
 
-Statuses are `open`, `in_progress`, `resolved`; priorities are `low`, `medium`,
-`high`. Validation errors return `422`, a missing ticket returns `404`, and an
-empty update returns `400`.
+The list endpoint is paginated and returns the requested slice together with the
+total count for the active filters:
+
+```json
+{
+  "items": [ /* tickets */ ],
+  "total": 14,
+  "limit": 10,
+  "offset": 0
+}
+```
+
+`limit` defaults to 10 (max 100) and `offset` to 0. Statuses are `open`,
+`in_progress`, `resolved`; priorities are `low`, `medium`, `high`. Validation
+errors return `422`, a missing ticket returns `404`, and an empty update returns
+`400`.
 
 ## Project structure
 
@@ -172,15 +185,15 @@ server/   FastAPI backend
 
 - **API versioning.** Endpoints live under `/api/v1` rather than the brief's
   literal `/api/tickets`. The brief allows a different route structure as long as
-  it's documented — versioning keeps the response contract free to evolve without
-  breaking clients.
+  it's documented, and versioning keeps the response contract free to evolve
+  without breaking clients.
 - **Extra `updated_at` field.** Beyond the required fields, tickets carry an
   `updated_at` timestamp (bumped on every change), which the details page shows
   as "last updated".
 - **camelCase JSON, snake_case database.** The database columns are snake_case;
   the API speaks camelCase to read naturally in the TypeScript frontend. The two
   are mapped explicitly at the route boundary.
-- **One `Ticket` table.** Customers aren't modelled separately — name and email
+- **One `Ticket` table.** Customers aren't modelled separately. Name and email
   live on the ticket, which is enough for this scope.
 - **Status updates happen on the details page** via an accessible select. The
   brief allows the control on the list or the details view; details keeps the list
@@ -188,20 +201,19 @@ server/   FastAPI backend
 - **Authentication.** The dashboard is gated behind email/password login (JWT
   access tokens, bcrypt-hashed passwords). The brief lists auth as optional and
   defines no user model, but since this is **deployed live**, leaving it fully
-  open-ended didn't seem the right call — anyone could create or modify tickets.
-  Tickets are shared across all authenticated users (no per-user ownership),
-  which keeps the single-dashboard model the brief describes.
+  open-ended didn't seem the right call, since anyone could create or modify
+  tickets. Tickets are shared across all authenticated users (no per-user
+  ownership), which keeps the single-dashboard model the brief describes.
 - **Hand-written CSS** instead of a component library, to keep the bundle small
   and the styling easy to read.
-- **Postgres over SQLite.** Heavier to set up locally, so Docker Compose provides
-  it; the brief accepts either.
+- **Postgres over SQLite.** The brief accepts either. Postgres is the more
+  production-realistic choice, and Docker Compose runs it so there's nothing to
+  install locally.
 
 ## What I'd add with more time
 
-- Pagination for large ticket volumes (sorting is implemented; pagination was
-  left out as over-engineering for the current dataset).
-- Per-user ticket ownership and roles — the current auth is shared-access.
+- Per-user ticket ownership and roles. The current auth is shared-access.
 - WebSocket live updates, which mainly pay off once several agents use the board
   concurrently.
-- Optimistic-update rollback and more frontend tests (details page, error paths).
-- An end-to-end test (Playwright).
+- More frontend tests (details page and error paths) and an end-to-end test
+  (Playwright).
