@@ -1,12 +1,15 @@
 import {
   PRIORITY_OPTIONS,
+  SORT_OPTIONS,
   STATUS_OPTIONS,
   type TicketFilters,
   type TicketPriority,
+  type TicketSort,
   type TicketStatus,
 } from "@/lib/types";
 
 import FilterPills from "./FilterPills";
+import Segmented from "./Segmented";
 
 interface Props {
   filters: TicketFilters;
@@ -43,6 +46,16 @@ export default function Filters({ filters, onChange }: Props) {
             onChange({ ...filters, priority: toggle(filters.priority, value) })
           }
           ariaLabel="Filter by priority"
+        />
+      </div>
+
+      <div className="filters__field">
+        <span className="filters__label">Sort</span>
+        <Segmented
+          options={SORT_OPTIONS}
+          value={filters.sort ?? "newest"}
+          onChange={(value: TicketSort) => onChange({ ...filters, sort: value })}
+          ariaLabel="Sort tickets"
         />
       </div>
     </div>

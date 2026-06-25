@@ -55,6 +55,7 @@ export function getTickets(filters: TicketFilters = {}): Promise<Ticket[]> {
   filters.status?.forEach((status) => params.append("status", status));
   filters.priority?.forEach((priority) => params.append("priority", priority));
   if (filters.search) params.set("search", filters.search);
+  if (filters.sort) params.set("sort", filters.sort);
   const query = params.toString();
   return request<Ticket[]>(query ? `${TICKETS_URL}?${query}` : TICKETS_URL);
 }

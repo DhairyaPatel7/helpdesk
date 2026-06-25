@@ -1,5 +1,6 @@
 export type TicketStatus = "open" | "in_progress" | "resolved";
 export type TicketPriority = "low" | "medium" | "high";
+export type TicketSort = "newest" | "oldest" | "priority";
 
 export interface Ticket {
   id: number;
@@ -25,6 +26,7 @@ export interface TicketFilters {
   status?: TicketStatus[];
   priority?: TicketPriority[];
   search?: string;
+  sort?: TicketSort;
 }
 
 export const STATUS_ORDER: TicketStatus[] = ["open", "in_progress", "resolved"];
@@ -53,3 +55,9 @@ export const PRIORITY_OPTIONS = PRIORITY_ORDER.map((value) => ({
   label: PRIORITY_LABELS[value],
   tone: value,
 }));
+
+export const SORT_OPTIONS: { value: TicketSort; label: string }[] = [
+  { value: "newest", label: "Newest" },
+  { value: "oldest", label: "Oldest" },
+  { value: "priority", label: "Priority" },
+];
