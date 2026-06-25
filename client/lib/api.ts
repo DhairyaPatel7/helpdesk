@@ -36,28 +36,50 @@ async function parseError(response: Response): Promise<string> {
   }
 }
 
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Free-tier hosts spin down when idle; the first request can fail or 502 while the
+// server wakes (up to ~50s). Retry transient failures before surfacing an error.
+const WAKE_RETRY_DELAYS = [2000, 5000, 10000, 15000];
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  const options: RequestInit = {
+    cache: "no-store",
+    ...init,
+    headers: { ...headers, ...(init?.headers as Record<string, string> | undefined) },
+  };
 
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      cache: "no-store",
-      ...init,
-      headers: { ...headers, ...(init?.headers as Record<string, string> | undefined) },
-    });
-  } catch {
-    throw new ApiError("Could not reach the server. Is the API running?", 0);
-  }
+  for (let attempt = 0; ; attempt++) {
+    let response: Response;
+    try {
+      response = await fetch(url, options);
+    } catch {
+      if (attempt < WAKE_RETRY_DELAYS.length) {
+        await wait(WAKE_RETRY_DELAYS[attempt]);
+        continue;
+      }
+      throw new ApiError(
+        "Could not reach the server. If this is the live demo, the free-tier backend may be waking up — please wait a moment and try again.",
+        0,
+      );
+    }
 
-  if (!response.ok) {
-    throw new ApiError(await parseError(response), response.status);
+    if ((response.status === 502 || response.status === 503) && attempt < WAKE_RETRY_DELAYS.length) {
+      await wait(WAKE_RETRY_DELAYS[attempt]);
+      continue;
+    }
+    if (!response.ok) {
+      throw new ApiError(await parseError(response), response.status);
+    }
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    return (await response.json()) as T;
   }
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  return (await response.json()) as T;
 }
 
 export function getTickets(filters: TicketFilters = {}): Promise<Ticket[]> {
