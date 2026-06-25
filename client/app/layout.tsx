@@ -27,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
               <nav className="site-header__nav">
                 <Link href="/">Tickets</Link>
+                <Link href="/board">Board</Link>
                 <Link href="/tickets/new" className="button button--primary">
                   New ticket
                 </Link>
