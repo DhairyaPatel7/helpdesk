@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
-import Link from "next/link";
 
+import AppShell from "@/components/AppShell";
+import AuthProvider from "@/components/AuthProvider";
 import ToastProvider from "@/components/ToastProvider";
 
 import "./globals.css";
@@ -18,24 +19,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>
-        <ToastProvider>
-          <header className="site-header">
-            <div className="container site-header__inner">
-              <Link href="/" className="brand" aria-label="Helpdesk home">
-                <span className="brand__mark" aria-hidden="true" />
-                <span className="brand__name">Helpdesk</span>
-              </Link>
-              <nav className="site-header__nav">
-                <Link href="/">Tickets</Link>
-                <Link href="/board">Board</Link>
-                <Link href="/tickets/new" className="button button--primary">
-                  New ticket
-                </Link>
-              </nav>
-            </div>
-          </header>
-          <main className="container main">{children}</main>
-        </ToastProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <AppShell>{children}</AppShell>
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );
