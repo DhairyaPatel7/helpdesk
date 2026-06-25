@@ -1,4 +1,12 @@
-import type { AuthResponse, AuthUser, NewTicket, Ticket, TicketFilters, TicketStatus } from "./types";
+import type {
+  AuthResponse,
+  AuthUser,
+  NewTicket,
+  Ticket,
+  TicketFilters,
+  TicketPage,
+  TicketStatus,
+} from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const TICKETS_URL = `${API_BASE}/api/v1/tickets`;
@@ -60,14 +68,19 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
-export function getTickets(filters: TicketFilters = {}): Promise<Ticket[]> {
+export function getTickets(
+  filters: TicketFilters = {},
+  pagination: { limit?: number; offset?: number } = {},
+): Promise<TicketPage> {
   const params = new URLSearchParams();
   filters.status?.forEach((status) => params.append("status", status));
   filters.priority?.forEach((priority) => params.append("priority", priority));
   if (filters.search) params.set("search", filters.search);
   if (filters.sort) params.set("sort", filters.sort);
+  if (pagination.limit != null) params.set("limit", String(pagination.limit));
+  if (pagination.offset != null) params.set("offset", String(pagination.offset));
   const query = params.toString();
-  return request<Ticket[]>(query ? `${TICKETS_URL}?${query}` : TICKETS_URL);
+  return request<TicketPage>(query ? `${TICKETS_URL}?${query}` : TICKETS_URL);
 }
 
 export function getTicket(id: number): Promise<Ticket> {

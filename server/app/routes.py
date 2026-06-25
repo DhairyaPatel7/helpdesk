@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import case, or_
+from sqlalchemy import case, func, or_
 from sqlmodel import Session, select
 
 from .auth import get_current_user
@@ -7,6 +7,7 @@ from .database import get_session
 from .models import Ticket, utcnow
 from .schemas import (
     TicketCreate,
+    TicketPage,
     TicketPriority,
     TicketRead,
     TicketSort,
@@ -21,25 +22,30 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[TicketRead])
+@router.get("", response_model=TicketPage)
 def list_tickets(
     status: list[TicketStatus] | None = Query(default=None),
     priority: list[TicketPriority] | None = Query(default=None),
     search: str | None = Query(default=None, description="Match title or customer name"),
     sort: TicketSort = Query(default=TicketSort.newest),
+    limit: int = Query(default=10, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     session: Session = Depends(get_session),
-) -> list[TicketRead]:
-    statement = select(Ticket)
-
+) -> TicketPage:
+    conditions = []
     if status:
-        statement = statement.where(Ticket.status.in_([item.value for item in status]))
+        conditions.append(Ticket.status.in_([item.value for item in status]))
     if priority:
-        statement = statement.where(Ticket.priority.in_([item.value for item in priority]))
+        conditions.append(Ticket.priority.in_([item.value for item in priority]))
     if search and search.strip():
         term = f"%{search.strip()}%"
-        statement = statement.where(
-            or_(Ticket.title.ilike(term), Ticket.customer_name.ilike(term))
-        )
+        conditions.append(or_(Ticket.title.ilike(term), Ticket.customer_name.ilike(term)))
+
+    count_statement = select(func.count()).select_from(Ticket)
+    statement = select(Ticket)
+    for condition in conditions:
+        count_statement = count_statement.where(condition)
+        statement = statement.where(condition)
 
     if sort is TicketSort.oldest:
         statement = statement.order_by(Ticket.created_at.asc())
@@ -49,8 +55,14 @@ def list_tickets(
     else:
         statement = statement.order_by(Ticket.created_at.desc())
 
-    tickets = session.exec(statement).all()
-    return [TicketRead.from_ticket(ticket) for ticket in tickets]
+    total = session.exec(count_statement).one()
+    tickets = session.exec(statement.offset(offset).limit(limit)).all()
+    return TicketPage(
+        items=[TicketRead.from_ticket(ticket) for ticket in tickets],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{ticket_id}", response_model=TicketRead)

@@ -121,6 +121,13 @@ class TicketRead(BaseModel):
         )
 
 
+class TicketPage(BaseModel):
+    items: list[TicketRead]
+    total: int
+    limit: int
+    offset: int
+
+
 class UserRegister(BaseModel):
     email: str
     password: str = Field(min_length=8, max_length=128)

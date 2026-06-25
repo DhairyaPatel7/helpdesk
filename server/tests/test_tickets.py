@@ -62,7 +62,7 @@ def test_filter_by_status(client: TestClient):
 
     response = client.get("/api/v1/tickets", params={"status": "open"})
     assert response.status_code == 200
-    ids = [ticket["id"] for ticket in response.json()]
+    ids = [ticket["id"] for ticket in response.json()["items"]]
     assert open_one["id"] in ids
     assert resolved["id"] not in ids
 
@@ -76,7 +76,7 @@ def test_filter_by_multiple_statuses(client: TestClient):
 
     response = client.get("/api/v1/tickets", params={"status": ["open", "in_progress"]})
     assert response.status_code == 200
-    ids = [ticket["id"] for ticket in response.json()]
+    ids = [ticket["id"] for ticket in response.json()["items"]]
     assert open_one["id"] in ids
     assert progress["id"] in ids
     assert resolved["id"] not in ids
@@ -94,5 +94,26 @@ def test_sort_by_priority(client: TestClient):
     ).json()
 
     response = client.get("/api/v1/tickets", params={"sort": "priority"})
-    ids = [ticket["id"] for ticket in response.json()]
+    ids = [ticket["id"] for ticket in response.json()["items"]]
     assert ids.index(high["id"]) < ids.index(medium["id"]) < ids.index(low["id"])
+
+
+def test_pagination_limits_results_and_reports_total(client: TestClient):
+    for index in range(3):
+        client.post("/api/v1/tickets", json=make_payload(title=f"Ticket {index}"))
+
+    first = client.get("/api/v1/tickets", params={"limit": 2, "offset": 0})
+    assert first.status_code == 200
+    body = first.json()
+    assert body["total"] == 3
+    assert body["limit"] == 2
+    assert body["offset"] == 0
+    assert len(body["items"]) == 2
+
+    second = client.get("/api/v1/tickets", params={"limit": 2, "offset": 2}).json()
+    assert second["total"] == 3
+    assert len(second["items"]) == 1
+
+    first_ids = {ticket["id"] for ticket in body["items"]}
+    second_ids = {ticket["id"] for ticket in second["items"]}
+    assert first_ids.isdisjoint(second_ids)

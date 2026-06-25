@@ -21,7 +21,8 @@ export default function BoardPage() {
     setState("loading");
     setError("");
     try {
-      setTickets(await getTickets());
+      const page = await getTickets({}, { limit: 100 });
+      setTickets(page.items);
       setState("ready");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");

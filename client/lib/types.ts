@@ -14,6 +14,15 @@ export interface Ticket {
   updatedAt: string;
 }
 
+export interface TicketPage {
+  items: Ticket[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export const PAGE_SIZE = 10;
+
 export interface NewTicket {
   title: string;
   description: string;

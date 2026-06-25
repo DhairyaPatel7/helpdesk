@@ -478,6 +478,27 @@ h1 {
   animation-delay: 0.18s;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.pagination__status {
+  color: var(--text-faint);
+  font-size: 0.85rem;
+  font-family: var(--font-mono), monospace;
+  min-width: 96px;
+  text-align: center;
+}
+
+.button:disabled:hover {
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+
 .ticket-card {
   display: flex;
   align-items: center;
