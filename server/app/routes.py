@@ -11,17 +11,17 @@ router = APIRouter(prefix="/tickets", tags=["tickets"])
 
 @router.get("", response_model=list[TicketRead])
 def list_tickets(
-    status: TicketStatus | None = Query(default=None),
-    priority: TicketPriority | None = Query(default=None),
+    status: list[TicketStatus] | None = Query(default=None),
+    priority: list[TicketPriority] | None = Query(default=None),
     search: str | None = Query(default=None, description="Match title or customer name"),
     session: Session = Depends(get_session),
 ) -> list[TicketRead]:
     statement = select(Ticket).order_by(Ticket.created_at.desc())
 
-    if status is not None:
-        statement = statement.where(Ticket.status == status.value)
-    if priority is not None:
-        statement = statement.where(Ticket.priority == priority.value)
+    if status:
+        statement = statement.where(Ticket.status.in_([item.value for item in status]))
+    if priority:
+        statement = statement.where(Ticket.priority.in_([item.value for item in priority]))
     if search and search.strip():
         term = f"%{search.strip()}%"
         statement = statement.where(

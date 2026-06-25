@@ -65,3 +65,18 @@ def test_filter_by_status(client: TestClient):
     ids = [ticket["id"] for ticket in response.json()]
     assert open_one["id"] in ids
     assert resolved["id"] not in ids
+
+
+def test_filter_by_multiple_statuses(client: TestClient):
+    open_one = client.post("/api/v1/tickets", json=make_payload(title="Open one")).json()
+    progress = client.post("/api/v1/tickets", json=make_payload(title="In progress one")).json()
+    client.patch(f"/api/v1/tickets/{progress['id']}", json={"status": "in_progress"})
+    resolved = client.post("/api/v1/tickets", json=make_payload(title="Resolved one")).json()
+    client.patch(f"/api/v1/tickets/{resolved['id']}", json={"status": "resolved"})
+
+    response = client.get("/api/v1/tickets", params={"status": ["open", "in_progress"]})
+    assert response.status_code == 200
+    ids = [ticket["id"] for ticket in response.json()]
+    assert open_one["id"] in ids
+    assert progress["id"] in ids
+    assert resolved["id"] not in ids
