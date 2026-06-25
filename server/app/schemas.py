@@ -4,7 +4,7 @@ from enum import Enum, StrEnum
 from email_validator import EmailNotValidError, validate_email
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
-from .models import Ticket
+from .models import Ticket, User
 
 
 class TicketStatus(StrEnum):
@@ -119,3 +119,43 @@ class TicketRead(BaseModel):
             createdAt=ticket.created_at,
             updatedAt=ticket.updated_at,
         )
+
+
+class UserRegister(BaseModel):
+    email: str
+    password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("email")
+    @classmethod
+    def valid_email(cls, value: str) -> str:
+        try:
+            return validate_email(value, check_deliverability=False).normalized.lower()
+        except EmailNotValidError as exc:
+            raise ValueError("Enter a valid email address") from exc
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class UserRead(BaseModel):
+    id: int
+    email: str
+    createdAt: datetime
+
+    @field_serializer("createdAt")
+    def serialize_created_at(self, value: datetime) -> str:
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=UTC)
+        return value.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    @classmethod
+    def from_user(cls, user: User) -> "UserRead":
+        return cls(id=user.id, email=user.email, createdAt=user.created_at)
+
+
+class TokenResponse(BaseModel):
+    accessToken: str
+    tokenType: str = "bearer"
+    user: UserRead

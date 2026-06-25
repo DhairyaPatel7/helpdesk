@@ -3,7 +3,11 @@ from datetime import UTC, datetime
 from sqlmodel import Session, select
 
 from .database import engine
-from .models import Ticket
+from .models import Ticket, User
+from .security import hash_password
+
+DEMO_EMAIL = "demo@aurexillion.com"
+DEMO_PASSWORD = "demo12345"
 
 
 def _at(year: int, month: int, day: int, hour: int, minute: int) -> datetime:
@@ -92,15 +96,27 @@ def _sample_tickets() -> list[Ticket]:
     ]
 
 
+def _seed_tickets(session: Session) -> None:
+    if session.exec(select(Ticket)).first() is not None:
+        return
+    tickets = _sample_tickets()
+    session.add_all(tickets)
+    session.commit()
+    print(f"Seeded {len(tickets)} tickets.")
+
+
+def _seed_demo_user(session: Session) -> None:
+    if session.exec(select(User).where(User.email == DEMO_EMAIL)).first() is not None:
+        return
+    session.add(User(email=DEMO_EMAIL, hashed_password=hash_password(DEMO_PASSWORD)))
+    session.commit()
+    print(f"Seeded demo user ({DEMO_EMAIL}).")
+
+
 def seed() -> None:
     with Session(engine) as session:
-        if session.exec(select(Ticket)).first() is not None:
-            print("Tickets already present — skipping seed.")
-            return
-        tickets = _sample_tickets()
-        session.add_all(tickets)
-        session.commit()
-        print(f"Seeded {len(tickets)} tickets.")
+        _seed_tickets(session)
+        _seed_demo_user(session)
 
 
 if __name__ == "__main__":

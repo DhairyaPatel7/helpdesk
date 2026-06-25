@@ -20,3 +20,12 @@ class Ticket(SQLModel, table=True):
     priority: str = Field(max_length=20, index=True)
     created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
     updated_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
+
+
+class User(SQLModel, table=True):
+    __tablename__ = "users"
+
+    id: int | None = Field(default=None, primary_key=True)
+    email: str = Field(max_length=255, index=True, unique=True)
+    hashed_password: str
+    created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))

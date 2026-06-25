@@ -8,6 +8,8 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://tickets:tickets@localhost:5432/tickets"
     frontend_origin: str = "http://localhost:3000"
+    jwt_secret: str = "dev-only-insecure-secret-change-in-prod"
+    access_token_expire_minutes: int = 60 * 24 * 7
 
     @property
     def cors_origins(self) -> list[str]:
