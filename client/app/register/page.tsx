@@ -36,6 +36,7 @@ export default function RegisterPage() {
     <div className="auth-card">
       <div className="auth-card__head">
         <span className="brand__mark brand__mark--lg" aria-hidden="true" />
+        <span className="auth-brand">Helpdesk</span>
         <h1 className="auth-card__title">Create your account</h1>
         <p className="auth-card__subtitle">Start managing support tickets.</p>
       </div>

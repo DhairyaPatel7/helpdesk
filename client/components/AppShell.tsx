@@ -48,9 +48,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <nav className="site-header__nav">
             <Link href="/">Tickets</Link>
             <Link href="/board">Board</Link>
-            <Link href="/tickets/new" className="button button--primary">
-              New ticket
-            </Link>
             <span className="site-header__divider" aria-hidden="true" />
             <span className="site-header__user" title={user.email}>
               {user.email}

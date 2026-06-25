@@ -32,7 +32,8 @@ export default function LoginPage() {
     <div className="auth-card">
       <div className="auth-card__head">
         <span className="brand__mark brand__mark--lg" aria-hidden="true" />
-        <h1 className="auth-card__title">Sign in to Helpdesk</h1>
+        <span className="auth-brand">Helpdesk</span>
+        <h1 className="auth-card__title">Sign in</h1>
         <p className="auth-card__subtitle">Manage and resolve support tickets.</p>
       </div>
 
@@ -71,9 +72,6 @@ export default function LoginPage() {
 
       <p className="auth-alt">
         No account yet? <Link href="/register">Create one</Link>
-      </p>
-      <p className="auth-demo">
-        Demo login: <code>demo@aurexillion.com</code> · <code>demo12345</code>
       </p>
     </div>
   );

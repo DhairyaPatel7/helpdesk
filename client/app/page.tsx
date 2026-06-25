@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import Filters from "@/components/Filters";
@@ -44,11 +45,16 @@ export default function HomePage() {
     <div>
       <div className="page-head">
         <h1>Tickets</h1>
-        {state === "ready" && (
-          <span className="page-head__count">
-            {tickets.length} {tickets.length === 1 ? "ticket" : "tickets"}
-          </span>
-        )}
+        <div className="page-head__actions">
+          {state === "ready" && (
+            <span className="page-head__count">
+              {tickets.length} {tickets.length === 1 ? "ticket" : "tickets"}
+            </span>
+          )}
+          <Link href="/tickets/new" className="button button--primary">
+            New ticket
+          </Link>
+        </div>
       </div>
 
       <div className="controls">
