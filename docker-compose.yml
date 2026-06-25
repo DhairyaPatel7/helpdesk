@@ -9,11 +9,33 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tickets} -d ${POSTGRES_DB:-tickets}"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build: ./server
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-tickets}:${POSTGRES_PASSWORD:-tickets}@db:5432/${POSTGRES_DB:-tickets}
+      FRONTEND_ORIGIN: http://localhost:3000
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./client
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
 
 volumes:
   db_data:
