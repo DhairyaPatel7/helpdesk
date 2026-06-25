@@ -11,7 +11,7 @@ on its own for development.
 | Layer    | Choice |
 | -------- | ------ |
 | Frontend | Next.js (App Router), TypeScript, hand-written CSS |
-| Backend  | FastAPI (Python 3.12), SQLModel, Alembic |
+| Backend  | FastAPI (Python 3.12), SQLModel, Alembic, JWT auth (bcrypt) |
 | Database | PostgreSQL |
 | Tests    | pytest (backend), Vitest + Testing Library (frontend) |
 | Tooling  | uv, Ruff, ESLint + Prettier, Docker Compose, GitHub Actions |
@@ -32,6 +32,14 @@ tickets, and serves the API and the UI. Once it's up:
 - API docs (Swagger): http://localhost:8000/docs
 
 Ports `3000`, `8000`, and `5432` need to be free.
+
+The dashboard is behind a login. A **demo account is seeded** so you can sign in
+immediately:
+
+- **Email:** `demo@aurexillion.com`
+- **Password:** `demo12345`
+
+You can also register a new account from the sign-in page.
 
 ## Running locally without Docker
 
@@ -69,8 +77,8 @@ Then open http://localhost:3000.
 - PostgreSQL, accessed through SQLModel/SQLAlchemy.
 - The schema is managed with **Alembic migrations** (`alembic upgrade head`); the
   app doesn't create tables on the fly.
-- Sample data is inserted by `python -m app.seed`, which is idempotent — it only
-  seeds when the table is empty.
+- Sample data (tickets + the demo user) is inserted by `python -m app.seed`,
+  which is idempotent — it only adds what's missing.
 - With Docker, migrations and seeding run automatically on startup.
 
 ## Running the tests
@@ -97,13 +105,19 @@ Both suites run in CI (GitHub Actions) on every push.
 
 REST, JSON in and out. The resource API is versioned under `/api/v1`.
 
-| Method  | Path                    | Description                                  |
-| ------- | ----------------------- | -------------------------------------------- |
-| `GET`   | `/api/v1/tickets`       | List tickets (`?status=`, `?priority=`, `?search=`) |
-| `GET`   | `/api/v1/tickets/{id}`  | Get one ticket                               |
-| `POST`  | `/api/v1/tickets`       | Create a ticket (always starts `open`)       |
-| `PATCH` | `/api/v1/tickets/{id}`  | Update a ticket (primarily its status)       |
-| `GET`   | `/api/health`           | Liveness check                               |
+| Method  | Path                    | Auth | Description |
+| ------- | ----------------------- | :--: | ----------- |
+| `POST`  | `/api/v1/auth/register` |  —   | Create an account, returns a token |
+| `POST`  | `/api/v1/auth/login`    |  —   | Sign in, returns a token |
+| `GET`   | `/api/v1/auth/me`       |  🔒  | The current user |
+| `GET`   | `/api/v1/tickets`       |  🔒  | List tickets (`?status=`, `?priority=`, `?search=`, `?sort=`) |
+| `GET`   | `/api/v1/tickets/{id}`  |  🔒  | Get one ticket |
+| `POST`  | `/api/v1/tickets`       |  🔒  | Create a ticket (always starts `open`) |
+| `PATCH` | `/api/v1/tickets/{id}`  |  🔒  | Update a ticket (primarily its status) |
+| `GET`   | `/api/health`           |  —   | Liveness check |
+
+Endpoints marked 🔒 require an `Authorization: Bearer <token>` header; obtain the
+token from `login` or `register`.
 
 A ticket looks like:
 
@@ -129,11 +143,11 @@ empty update returns `400`.
 
 ```
 client/   Next.js + TypeScript frontend
-  app/        routes (list, tickets/new, tickets/[id])
+  app/        routes (list, board, tickets/new, tickets/[id], login, register)
   components/ presentational + interactive components
   lib/        typed API client, types, formatting
 server/   FastAPI backend
-  app/        main, routes, models, schemas, database, seed, config
+  app/        main, routes, auth, security, models, schemas, database, seed, config
   migrations/ Alembic migrations
   tests/      pytest suite
 db/       Postgres init (creates the test database)
@@ -156,7 +170,12 @@ db/       Postgres init (creates the test database)
 - **Status updates happen on the details page** via an accessible select. The
   brief allows the control on the list or the details view; details keeps the list
   clean.
-- **No authentication.** Out of scope here, so the API is open.
+- **Authentication.** The dashboard is gated behind email/password login (JWT
+  access tokens, bcrypt-hashed passwords). The brief lists auth as optional and
+  defines no user model, but since this is **deployed live**, leaving it fully
+  open-ended didn't seem the right call — anyone could create or modify tickets.
+  Tickets are shared across all authenticated users (no per-user ownership),
+  which keeps the single-dashboard model the brief describes.
 - **Hand-written CSS** instead of a component library, to keep the bundle small
   and the styling easy to read.
 - **Postgres over SQLite.** Heavier to set up locally, so Docker Compose provides
@@ -164,12 +183,10 @@ db/       Postgres init (creates the test database)
 
 ## What I'd add with more time
 
-- A Kanban board with drag-and-drop status changes.
-- Pagination and server-side sorting once ticket volumes grow — kept simple here
-  on purpose, since the dataset is small and the brief warns against
-  over-engineering.
-- Authentication and role-based access — deliberately left out: the brief has no
-  user model and lists it as optional, so adding it would be scope creep.
-- Optimistic UI updates with rollback, plus more frontend tests (details page,
-  error paths).
-- An end-to-end test (Playwright) and a deployed demo.
+- Pagination for large ticket volumes (sorting is implemented; pagination was
+  left out as over-engineering for the current dataset).
+- Per-user ticket ownership and roles — the current auth is shared-access.
+- WebSocket live updates, which mainly pay off once several agents use the board
+  concurrently.
+- Optimistic-update rollback and more frontend tests (details page, error paths).
+- An end-to-end test (Playwright).
