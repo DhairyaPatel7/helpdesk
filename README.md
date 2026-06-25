@@ -14,10 +14,8 @@ on its own for development.
 Sign in with the seeded demo account — **`demo@aurexillion.com` / `demo12345`** —
 or register a new one.
 
-> The demo runs entirely on free tiers (Vercel + Render + Neon). The backend
-> **sleeps after ~15 minutes of inactivity**, so the **first request after idle can
-> take ~30–60s to wake** (a cold start); it's fast afterwards. For the snappiest
-> experience, run it locally with `docker compose up`.
+> Hosted on Vercel (frontend), Render (backend), and Neon (Postgres). The full
+> stack also runs locally with `docker compose up`.
 
 ## Tech stack
 
