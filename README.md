@@ -31,7 +31,7 @@ or register a new one.
 
 ### Optional enhancements
 
-- [x] **Drag-and-drop Kanban board** across Open, In Progress and Resolved; the new status persists across a refresh
+- [x] **Drag-and-drop Kanban board**: move cards across columns to change status, and reorder them within a column; both the status and the order persist across a refresh
 - [x] **Search** tickets by title or customer name
 - [x] **Pagination and sorting** (newest, oldest, priority), both applied on the server
 - [x] **Docker Compose** setup for a one-command run
@@ -163,6 +163,7 @@ REST, JSON in and out. The resource API is versioned under `/api/v1`.
 | `GET`   | `/api/v1/tickets/{id}`  |  🔒  | Get one ticket |
 | `POST`  | `/api/v1/tickets`       |  🔒  | Create a ticket (always starts `open`) |
 | `PATCH` | `/api/v1/tickets/{id}`  |  🔒  | Update a ticket (primarily its status) |
+| `POST`  | `/api/v1/tickets/reorder` | 🔒 | Reorder a board column and persist card positions |
 | `GET`   | `/api/health`           |      | Liveness check |
 
 Endpoints marked 🔒 require an `Authorization: Bearer <token>` header; obtain the
@@ -179,6 +180,7 @@ A ticket looks like:
   "customerEmail": "jane@example.com",
   "status": "open",
   "priority": "high",
+  "position": 0,
   "createdAt": "2026-06-18T10:30:00Z",
   "updatedAt": "2026-06-18T10:30:00Z"
 }
@@ -232,6 +234,10 @@ server/   FastAPI backend
   them before counting and slicing, so the total stays accurate and the response
   stays small as the data grows, rather than shipping every ticket to the browser
   to filter there.
+- **Board order is persisted.** The Kanban board stores a per-column `position`,
+  so cards keep the exact order you drag them into and it survives a refresh. The
+  main list keeps its own sorting (newest, oldest, or priority); position only
+  drives the board.
 - **Status updates happen on the details page** via an accessible select. The
   brief allows the control on the list or the details view; details keeps the list
   clean.
