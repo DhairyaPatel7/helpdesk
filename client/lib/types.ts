@@ -10,6 +10,7 @@ export interface Ticket {
   customerEmail: string;
   status: TicketStatus;
   priority: TicketPriority;
+  position: number;
   createdAt: string;
   updatedAt: string;
 }

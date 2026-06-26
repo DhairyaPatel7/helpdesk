@@ -13,6 +13,7 @@ function ticket(overrides: Partial<Ticket> = {}): Ticket {
     customerEmail: "jane@example.com",
     status: "open",
     priority: "high",
+    position: 0,
     createdAt: "2026-06-18T10:30:00Z",
     updatedAt: "2026-06-18T10:30:00Z",
     ...overrides,

@@ -101,6 +101,13 @@ export function updateTicketStatus(id: number, status: TicketStatus): Promise<Ti
   });
 }
 
+export function reorderTickets(status: TicketStatus, orderedIds: number[]): Promise<Ticket[]> {
+  return request<Ticket[]>(`${TICKETS_URL}/reorder`, {
+    method: "POST",
+    body: JSON.stringify({ status, orderedIds }),
+  });
+}
+
 export function register(email: string, password: string): Promise<AuthResponse> {
   return request<AuthResponse>(`${AUTH_URL}/register`, {
     method: "POST",

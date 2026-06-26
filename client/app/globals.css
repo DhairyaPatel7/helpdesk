@@ -974,6 +974,13 @@ h1 {
   font-size: 0.82rem;
 }
 
+.column__indicator {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--ink);
+  margin: 0 2px;
+}
+
 .board-card {
   background: var(--surface);
   border: 1px solid var(--border);

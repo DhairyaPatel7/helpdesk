@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import KanbanBoard from "@/components/KanbanBoard";
 import Spinner from "@/components/Spinner";
 import { useToast } from "@/components/ToastProvider";
-import { ApiError, getTickets, updateTicketStatus } from "@/lib/api";
+import { ApiError, getTickets, reorderTickets } from "@/lib/api";
 import type { Ticket, TicketStatus } from "@/lib/types";
 
 type LoadState = "loading" | "error" | "ready";
@@ -34,20 +34,25 @@ export default function BoardPage() {
     void load();
   }, [load]);
 
-  async function moveTicket(id: number, status: TicketStatus) {
-    const current = tickets.find((ticket) => ticket.id === id);
-    if (!current || current.status === status) return;
-
+  async function reorder(status: TicketStatus, orderedIds: number[]) {
     const previous = tickets;
-    setTickets((prev) => prev.map((ticket) => (ticket.id === id ? { ...ticket, status } : ticket)));
+    const statusChanged = previous.some(
+      (ticket) => orderedIds.includes(ticket.id) && ticket.status !== status,
+    );
+
+    setTickets((prev) =>
+      prev.map((ticket) => {
+        const index = orderedIds.indexOf(ticket.id);
+        return index === -1 ? ticket : { ...ticket, status, position: index };
+      }),
+    );
 
     try {
-      const updated = await updateTicketStatus(id, status);
-      setTickets((prev) => prev.map((ticket) => (ticket.id === id ? updated : ticket)));
-      showToast("Status updated.", "success");
+      await reorderTickets(status, orderedIds);
+      if (statusChanged) showToast("Status updated.", "success");
     } catch (err) {
       setTickets(previous);
-      showToast(err instanceof ApiError ? err.message : "Could not update the status.", "error");
+      showToast(err instanceof ApiError ? err.message : "Could not move the ticket.", "error");
     }
   }
 
@@ -60,7 +65,9 @@ export default function BoardPage() {
         </Link>
       </div>
 
-      <p className="board__hint">Drag a ticket between columns to change its status.</p>
+      <p className="board__hint">
+        Drag a ticket within a column to reorder it, or across columns to change its status.
+      </p>
 
       {state === "loading" && <Spinner />}
 
@@ -74,7 +81,7 @@ export default function BoardPage() {
         </div>
       )}
 
-      {state === "ready" && <KanbanBoard tickets={tickets} onMove={moveTicket} />}
+      {state === "ready" && <KanbanBoard tickets={tickets} onReorder={reorder} />}
     </div>
   );
 }
