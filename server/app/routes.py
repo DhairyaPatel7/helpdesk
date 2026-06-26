@@ -10,6 +10,7 @@ from .schemas import (
     TicketPage,
     TicketPriority,
     TicketRead,
+    TicketReorder,
     TicketSort,
     TicketStatus,
     TicketUpdate,
@@ -65,6 +66,34 @@ def list_tickets(
     )
 
 
+@router.post("/reorder", response_model=list[TicketRead])
+def reorder_tickets(
+    payload: TicketReorder, session: Session = Depends(get_session)
+) -> list[TicketRead]:
+    if not payload.orderedIds:
+        raise HTTPException(status_code=400, detail="No tickets to reorder")
+
+    tickets = session.exec(select(Ticket).where(Ticket.id.in_(payload.orderedIds))).all()
+    by_id = {ticket.id: ticket for ticket in tickets}
+    if any(ticket_id not in by_id for ticket_id in payload.orderedIds):
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    target = payload.status.value
+    for index, ticket_id in enumerate(payload.orderedIds):
+        ticket = by_id[ticket_id]
+        if ticket.status != target:
+            ticket.status = target
+            ticket.updated_at = utcnow()
+        ticket.position = index
+        session.add(ticket)
+    session.commit()
+
+    column = session.exec(
+        select(Ticket).where(Ticket.status == target).order_by(Ticket.position.asc())
+    ).all()
+    return [TicketRead.from_ticket(ticket) for ticket in column]
+
+
 @router.get("/{ticket_id}", response_model=TicketRead)
 def get_ticket(ticket_id: int, session: Session = Depends(get_session)) -> TicketRead:
     ticket = session.get(Ticket, ticket_id)
@@ -75,6 +104,9 @@ def get_ticket(ticket_id: int, session: Session = Depends(get_session)) -> Ticke
 
 @router.post("", response_model=TicketRead, status_code=201)
 def create_ticket(payload: TicketCreate, session: Session = Depends(get_session)) -> TicketRead:
+    top = session.exec(
+        select(func.min(Ticket.position)).where(Ticket.status == TicketStatus.open.value)
+    ).one()
     ticket = Ticket(
         title=payload.title,
         description=payload.description,
@@ -82,6 +114,7 @@ def create_ticket(payload: TicketCreate, session: Session = Depends(get_session)
         customer_email=payload.customerEmail,
         priority=payload.priority.value,
         status=TicketStatus.open.value,
+        position=(top - 1) if top is not None else 0,
     )
     session.add(ticket)
     session.commit()

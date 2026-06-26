@@ -144,7 +144,7 @@ def _sample_tickets() -> list[Ticket]:
             _at(2026, 6, 17, 8, 25),
         ),
     ]
-    return [
+    tickets = [
         Ticket(
             title=title,
             description=description,
@@ -157,6 +157,16 @@ def _sample_tickets() -> list[Ticket]:
         )
         for title, description, customer_name, customer_email, status, priority, created_at in rows
     ]
+    _assign_positions(tickets)
+    return tickets
+
+
+def _assign_positions(tickets: list[Ticket]) -> None:
+    next_position: dict[str, int] = {}
+    for ticket in sorted(tickets, key=lambda t: t.created_at, reverse=True):
+        rank = next_position.get(ticket.status, 0)
+        ticket.position = rank
+        next_position[ticket.status] = rank + 1
 
 
 def _seed_tickets(session: Session) -> None:

@@ -18,6 +18,7 @@ class Ticket(SQLModel, table=True):
     customer_email: str = Field(max_length=255)
     status: str = Field(default="open", max_length=20, index=True)
     priority: str = Field(max_length=20, index=True)
+    position: int = Field(default=0, index=True)
     created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
     updated_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
 

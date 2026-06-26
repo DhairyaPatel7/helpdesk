@@ -97,6 +97,7 @@ class TicketRead(BaseModel):
     customerEmail: str
     status: TicketStatus
     priority: TicketPriority
+    position: int
     createdAt: datetime
     updatedAt: datetime
 
@@ -116,6 +117,7 @@ class TicketRead(BaseModel):
             customerEmail=ticket.customer_email,
             status=TicketStatus(ticket.status),
             priority=TicketPriority(ticket.priority),
+            position=ticket.position,
             createdAt=ticket.created_at,
             updatedAt=ticket.updated_at,
         )
@@ -126,6 +128,11 @@ class TicketPage(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class TicketReorder(BaseModel):
+    status: TicketStatus
+    orderedIds: list[int]
 
 
 class UserRegister(BaseModel):

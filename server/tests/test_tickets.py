@@ -98,6 +98,40 @@ def test_sort_by_priority(client: TestClient):
     assert ids.index(high["id"]) < ids.index(medium["id"]) < ids.index(low["id"])
 
 
+def test_reorder_persists_position_and_status(client: TestClient):
+    a = client.post("/api/v1/tickets", json=make_payload(title="A")).json()
+    b = client.post("/api/v1/tickets", json=make_payload(title="B")).json()
+    c = client.post("/api/v1/tickets", json=make_payload(title="C")).json()
+
+    reordered = client.post(
+        "/api/v1/tickets/reorder",
+        json={"status": "open", "orderedIds": [c["id"], a["id"], b["id"]]},
+    )
+    assert reordered.status_code == 200
+    body = reordered.json()
+    assert [ticket["id"] for ticket in body] == [c["id"], a["id"], b["id"]]
+    assert [ticket["position"] for ticket in body] == [0, 1, 2]
+
+    moved = client.post(
+        "/api/v1/tickets/reorder",
+        json={"status": "in_progress", "orderedIds": [b["id"]]},
+    )
+    assert moved.status_code == 200
+    assert moved.json()[0]["status"] == "in_progress"
+
+    open_response = client.get("/api/v1/tickets", params={"status": "open"}).json()
+    assert b["id"] not in [ticket["id"] for ticket in open_response["items"]]
+
+
+def test_reorder_rejects_unknown_ticket(client: TestClient):
+    created = client.post("/api/v1/tickets", json=make_payload()).json()
+    response = client.post(
+        "/api/v1/tickets/reorder",
+        json={"status": "open", "orderedIds": [created["id"], 999999]},
+    )
+    assert response.status_code == 404
+
+
 def test_pagination_limits_results_and_reports_total(client: TestClient):
     for index in range(3):
         client.post("/api/v1/tickets", json=make_payload(title=f"Ticket {index}"))
