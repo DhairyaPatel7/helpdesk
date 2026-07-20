@@ -1,23 +1,12 @@
-# Support Ticket Dashboard
+# Helpdesk — Support Ticket Dashboard
 
-[![CI](https://github.com/DhairyaPatel7/aurexillion-technical-assessment/actions/workflows/ci.yml/badge.svg)](https://github.com/DhairyaPatel7/aurexillion-technical-assessment/actions/workflows/ci.yml)
+[![CI](https://github.com/DhairyaPatel7/helpdesk/actions/workflows/ci.yml/badge.svg)](https://github.com/DhairyaPatel7/helpdesk/actions/workflows/ci.yml)
 
 A compact full-stack app for viewing, creating, and updating customer support
 tickets. Next.js + TypeScript on the front, FastAPI + PostgreSQL on the back.
 
 The whole thing runs with a single command via Docker, or each piece can be run
 on its own for development.
-
-## Live demo
-
-- **App:** https://aurexillion-technical-assessment.vercel.app
-- **API docs (Swagger):** https://aurexillion-api.onrender.com/docs
-
-Sign in with the seeded demo account (**`demo@aurexillion.com` / `demo12345`**)
-or register a new one.
-
-> Hosted on Vercel (frontend), Render (backend), and Neon (Postgres). The full
-> stack also runs locally with `docker compose up`.
 
 ## Features
 
@@ -37,7 +26,6 @@ or register a new one.
 - [x] **Docker Compose** setup for a one-command run
 - [x] **Authentication** with email and password (JWT access tokens, bcrypt hashing)
 - [x] **Swagger / OpenAPI** documentation at `/docs`
-- [x] **Deployment** to the cloud (Vercel, Render, Neon)
 - [x] **Additional automated tests** and a CI pipeline running both suites
 - [x] **Accessibility** improvements (keyboard-usable controls, labelled inputs, focus states)
 - [ ] **WebSocket live updates** (not implemented; it would mainly help once several agents use the board at once)
@@ -75,7 +63,7 @@ Ports `3000`, `8000`, and `5432` need to be free.
 The dashboard is behind a login. A **demo account is seeded** so you can sign in
 immediately:
 
-- **Email:** `demo@aurexillion.com`
+- **Email:** `demo@helpdesk.local`
 - **Password:** `demo12345`
 
 You can also register a new account from the sign-in page.
@@ -243,8 +231,8 @@ server/   FastAPI backend
   clean.
 - **Authentication.** The dashboard is gated behind email/password login (JWT
   access tokens, bcrypt-hashed passwords). The brief lists auth as optional and
-  defines no user model, but since this is **deployed live**, leaving it fully
-  open-ended did not seem the right call, since anyone could create or modify
+  defines no user model, but leaving it fully open-ended did not seem the right
+  call, since anyone reaching the app could create or modify
   tickets. Tickets are shared across all authenticated users (no per-user
   ownership), which keeps the single-dashboard model the brief describes.
 - **Hand-written CSS** instead of a component library, to keep the bundle small

@@ -6,7 +6,7 @@ from .database import engine
 from .models import Ticket, User
 from .security import hash_password
 
-DEMO_EMAIL = "demo@aurexillion.com"
+DEMO_EMAIL = "demo@helpdesk.local"
 DEMO_PASSWORD = "demo12345"
 
 
